@@ -1,2 +1,4 @@
+<% if @request -%>
 * session id: <%= @request.session_options[:id] %>
 * data: <%= @request.session.inspect %>
+<% end -%>
