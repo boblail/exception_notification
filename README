@@ -15,10 +15,68 @@ environment, and also gives a backtrace of the exception.
 
 As of Rails 3 ExceptionNotifier is used as a rack middleware
 
-  Whatever::Application.config.middleware.use ExceptionNotifier,
-    :email_prefix => "[Whatever] ",
-    :sender_address => %{"notifier" <notifier@example.com>},
-    :exception_recipients => %w{exceptions@example.com}
+  class ApplicationController < ActionController::Base
+    include ExceptionNotification::Notifiable
+    ...
+  end
+
+Then, specify the email recipients in your environment:
+
+  ExceptionNotification::Notifier.exception_recipients = %w(joe@schmoe.com bill@schmoe.com)
+
+And that's it! The defaults take care of the rest.
+
+== Configuration
+
+You can tweak other values to your liking, as well. In your environment file,
+just set any or all of the following values:
+
+  # defaults to exception.notifier@default.com
+  ExceptionNotification::Notifier.sender_address =
+    %("Application Error" <app.error@myapp.com>)
+
+  # defaults to "[ERROR] "
+  ExceptionNotification::Notifier.email_prefix = "[APP] "
+
+Even if you have mixed into ApplicationController you can skip notification in
+some controllers by
+  
+  class MyController  < ApplicationController
+    skip_exception_notifications
+  end
+  
+== Deprecated local_request? overriding
+
+Email notifications will only occur when the IP address is determined not to
+be local. You can specify certain addresses to always be local so that you'll
+get a detailed error instead of the generic error page. You do this in your
+controller (or even per-controller):
+
+  consider_local "64.72.18.143", "14.17.21.25"
+
+You can specify subnet masks as well, so that all matching addresses are
+considered local:
+
+  consider_local "64.72.18.143/24"
+
+The address "127.0.0.1" is always considered local. If you want to completely
+reset the list of all addresses (for instance, if you wanted "127.0.0.1" to
+NOT be considered local), you can simply do, somewhere in your controller:
+
+  local_addresses.clear
+
+NOTE: The above functionality has has been pulled out to consider_local.rb,
+as interfering with rails local determination is orthogonal to notification, 
+unnecessarily clutters backtraces, and even occasionally errs on odd ip or 
+requests bugs. To return original functionality add an initializer with:
+ 
+  ActionController::Base.send :include, ConsiderLocal
+
+or just include it per controller that wants it
+
+ class MyController  < ApplicationController
+   include ExceptionNotification::ConsiderLocal
+ end
 
 == Customization
 
@@ -36,7 +94,7 @@ access to the following variables:
 * @sections: the array of sections to include in the email
 
 You can reorder the sections, or exclude sections completely, by altering the
-ExceptionNotifier.sections variable. You can even add new sections that
+ExceptionNotification::Notifier.sections variable. You can even add new sections that
 describe application-specific data--just add the section's name to the list
 (whereever you'd like), and define the corresponding partial. Then, if your
 new section requires information that isn't available by default, make sure
@@ -59,20 +117,24 @@ In the above case, @document and @person would be made available to the email
 renderer, allowing your new section(s) to access and display them. See the
 existing sections defined by the plugin for examples of how to write your own.
 
-== Notification
 
-After an exception notification has been delivered the rack environment variable
-'exception_notifier.delivered' will be set to +true+.
+== 404s errors
 
-== Rails 2.3 stable and earlier
+Notification is skipped if you return a 404 status, which happens by default 
+for an ActiveRecord::RecordNotFound or ActionController::UnknownAction error.
 
-If you are running Rails 2.3 then see the branch for that: 
- 
-  http://github.com/rails/exception_notification/tree/2-3-stable
+== Manually notifying of error in a rescue block
 
-If you are running pre-rack Rails then see this tag: 
+If your controller action manually handles an error, the notifier will never be
+run.  To manually notify of an error call notify_about_exception from within the
+rescue block
 
-  http://github.com/rails/exception_notification/tree/pre-2-3
+  def index
+    #risky operation here
+  rescue StandardError => error
+    #custom error handling here
+    notify_about_exception(error)
+  end
 
 == Support and tickets
 
