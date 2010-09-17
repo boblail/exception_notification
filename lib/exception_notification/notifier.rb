@@ -50,7 +50,12 @@ class ExceptionNotification::Notifier < ActionMailer::Base
   end
 
   def exception_notification(exception, controller, request, options={})
+    exception = Exception.new(exception) if exception.is_a?(String)
     source = self.class.exception_source(controller)
+    sections, data = self.sections, (options[:data] || {})
+    sections << "data" unless data.empty?
+    
+    
     content_type "text/plain"
 
     subject    "#{email_prefix}#{source} (#{exception.class}) #{exception.message.inspect}"
@@ -66,7 +71,7 @@ class ExceptionNotification::Notifier < ActionMailer::Base
                   :host => (request ? (request.env["HTTP_X_FORWARDED_HOST"] || request.env["HTTP_HOST"]) : "unknown"),
                   :backtrace => sanitize_backtrace(exception.backtrace),
                   :rails_root => rails_root,
-                  :data => options[:data],
+                  :data => data,
                   :sections => (options[:sections] || (sections - (options[:except_sections]||[])))
                })
   end
