@@ -52,7 +52,7 @@ class ExceptionNotification::Notifier < ActionMailer::Base
   def exception_notification(exception, controller, request, options={})
     exception = Exception.new(exception) if exception.is_a?(String)
     source = self.class.exception_source(controller)
-    sections, data = self.sections, (options[:data] || {})
+    sections, data = self.sections.dup, (options[:data] || {})
     sections.unshift("data") unless data.empty?
     
     
@@ -72,7 +72,7 @@ class ExceptionNotification::Notifier < ActionMailer::Base
                   :backtrace => sanitize_backtrace(exception.backtrace),
                   :rails_root => rails_root,
                   :data => data,
-                  :sections => (options[:sections] || (sections - (options[:except_sections]||[])))
+                  :sections => (options[:sections] || (sections - (options[:except_sections]||[]))).uniq
                })
   end
 
