@@ -53,7 +53,7 @@ class ExceptionNotification::Notifier < ActionMailer::Base
     exception = Exception.new(exception) if exception.is_a?(String)
     source = self.class.exception_source(controller)
     sections, data = self.sections, (options[:data] || {})
-    sections << "data" unless data.empty?
+    sections.unshift("data") unless data.empty?
     
     
     content_type "text/plain"
