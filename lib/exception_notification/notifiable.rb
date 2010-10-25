@@ -61,6 +61,9 @@ private
       when Proc then deliverer.call(self)
     end
 
-    ExceptionNotification::Notifier.deliver_exception_notification(exception, self, request, data)
+    ExceptionNotification::Notifier.deliver_exception_notification(
+      :exception => exception,
+      :controller => self,
+      :data => data)
   end
 end

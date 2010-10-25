@@ -26,16 +26,16 @@ class ExceptionNotification::Notifier < ActionMailer::Base
   
   @@sender_address = %("Exception Notifier" <exception.notifier@default.com>)
   cattr_accessor :sender_address
-
+  
   @@exception_recipients = []
   cattr_accessor :exception_recipients
-
+  
   @@email_prefix = "[ERROR] "
   cattr_accessor :email_prefix
-
+  
   @@sections = %w(request session environment backtrace)
   cattr_accessor :sections
-
+  
   def self.reloadable?() false end
   
   def self.safely_deliver_exception_notification(*args)
@@ -43,26 +43,32 @@ class ExceptionNotification::Notifier < ActionMailer::Base
       ExceptionNotification::Notifier.deliver_exception_notification(*args)
     rescue
       begin
-        Rails.logger.error "#{$!}\n#{$!.backtrace}"
+        Rails.logger.error "[exception_notification] #{$!}\n#{$!.backtrace}"
       rescue
       end
     end
   end
-
-  def exception_notification(exception, controller, request, options={})
+  
+  def exception_notification(*args)
+    options = args.extract_options!
+        
+    exception = options[:exception] || $!
     exception = Exception.new(exception) if exception.is_a?(String)
+    
+    controller = args.first || options[:controller]
+    request = controller.respond_to?(:request) ? controller.request : nil
     source = self.class.exception_source(controller)
+    
     sections, data = self.sections.dup, (options[:data] || {})
     sections.unshift("data") unless data.empty?
     
-    
     content_type "text/plain"
-
+    
     subject    "#{email_prefix}#{source} (#{exception.class}) #{exception.message.inspect}"
-
+    
     recipients exception_recipients
     from       sender_address
-
+    
     body       ({
                   :controller => controller,
                   :request => request,
@@ -75,7 +81,7 @@ class ExceptionNotification::Notifier < ActionMailer::Base
                   :sections => (options[:sections] || (sections - (options[:except_sections]||[]))).uniq
                })
   end
-
+  
   def self.exception_source(controller)
     if controller.respond_to?(:controller_name)
       "in #{controller.controller_name}##{controller.action_name}"
@@ -83,17 +89,24 @@ class ExceptionNotification::Notifier < ActionMailer::Base
       "outside of a controller"
     end
   end
-
+  
+  
+  
 private
-
+  
+  
+  
   def sanitize_backtrace(trace)
     return [] if trace.blank?
     # re = Regexp.new(/^#{Regexp.escape(rails_root)}/) # <-- redundant?
     re = /^#{Regexp.escape(rails_root)}/
     trace.map { |line| Pathname.new(line.gsub(re, "[RAILS_ROOT]")).cleanpath.to_s }
   end
-
+  
   def rails_root
     @rails_root ||= Pathname.new(RAILS_ROOT).cleanpath.to_s
   end
+  
+  
+  
 end
