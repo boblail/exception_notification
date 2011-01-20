@@ -35,7 +35,7 @@ class ExceptionNotifier
           ExceptionNotifier::Notifier.deliver_exception_notification(*args)
         rescue
           begin
-            Rails.logger.error "[exception_notification] #{$!}\n#{$!.backtrace}"
+            Rails.logger.error "[exception_notification] #{$!}\n#{$!.backtrace.join("\n")}"
           rescue
           end
         end
