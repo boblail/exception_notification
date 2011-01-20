@@ -7,22 +7,16 @@ class ExceptionNotifier
     self.append_view_path "#{File.dirname(__FILE__)}/views"
 
     class << self
-      def default_sender_address
-        %("Exception Notifier" <exception.notifier@default.com>)
-      end
-
-      def default_exception_recipients
-        []
-      end
-
-      def default_email_prefix
-        "[ERROR] "
-      end
-
-      def default_sections
-        %w(request session environment backtrace)
-      end
-
+      attr_accessor :default_sender_address,
+                    :default_exception_recipients,
+                    :default_email_prefix,
+                    :default_sections
+      
+      @default_sender_address = %("Exception Notifier" <exception.notifier@default.com>)
+      @default_exception_recipients = []
+      @default_email_prefix = "[ERROR] "
+      @default_sections = %w(request session environment backtrace)
+      
       def default_options
         { :sender_address => default_sender_address,
           :exception_recipients => default_exception_recipients,
@@ -56,8 +50,9 @@ class ExceptionNotifier
       @kontroller = (@env ? @env['action_controller.instance'] : nil) || MissingController.new
       @request    = @env ? ActionDispatch::Request.new(@env) : nil
       @backtrace  = clean_backtrace(@exception)
-      @sections   = @options[:sections]
       data        = options[:data] || (@env ? @env['exception_notifier.exception_data'] : nil) || {}
+      @sections   = @options[:sections]
+      @sections << "data" unless data.blank?
 
       data.each do |name, value|
         instance_variable_set("@#{name}", value)
