@@ -4,6 +4,7 @@ A <%= @exception.class %> occurred in <%= @kontroller.controller_name %>#<%= @ko
   <%= raw @backtrace.first %>
 
 <%  sections = @sections.map do |section|
+      Rails.logger.error "[exception_notification] rendering #{section}"
       summary = render(section).strip
       unless summary.blank?
         title = render("title", :title => section).strip
