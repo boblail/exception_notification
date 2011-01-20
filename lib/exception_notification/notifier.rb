@@ -40,6 +40,7 @@ class ExceptionNotification::Notifier < ActionMailer::Base
   
   def self.safely_deliver_exception_notification(*args)
     begin
+      options = args.
       ExceptionNotification::Notifier.deliver_exception_notification(*args)
     rescue
       begin

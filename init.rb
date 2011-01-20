@@ -1,1 +1,1 @@
-require "exception_notification"
+require "exception_notifier"
