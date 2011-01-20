@@ -5,17 +5,17 @@ class ExceptionNotifier
   class Notifier < ActionMailer::Base
     self.mailer_name = 'exception_notifier'
     self.append_view_path "#{File.dirname(__FILE__)}/views"
-
+    
+    @default_sender_address = %("Exception Notifier" <exception.notifier@default.com>)
+    @default_exception_recipients = []
+    @default_email_prefix = "[ERROR] "
+    @default_sections = %w(request session environment backtrace)
+    
     class << self
       attr_accessor :default_sender_address,
                     :default_exception_recipients,
                     :default_email_prefix,
                     :default_sections
-      
-      @default_sender_address = %("Exception Notifier" <exception.notifier@default.com>)
-      @default_exception_recipients = []
-      @default_email_prefix = "[ERROR] "
-      @default_sections = %w(request session environment backtrace)
       
       def default_options
         { :sender_address => default_sender_address,
