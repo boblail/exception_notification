@@ -51,10 +51,11 @@ class ExceptionNotifier
       options     = args.extract_options!
       @env        = options[:env]
       @exception  = args.first || $!
+      @exception  = Exception.new(@exception) if @exception.is_a?(String)
       @options    = ((@env ? @env['exception_notifier.options'] : nil) || {}).merge(options).reverse_merge(self.class.default_options)
       @kontroller = (@env ? @env['action_controller.instance'] : nil) || MissingController.new
       @request    = @env ? ActionDispatch::Request.new(@env) : nil
-      @backtrace  = clean_backtrace(exception)
+      @backtrace  = clean_backtrace(@exception)
       @sections   = @options[:sections]
       data        = options[:data] || (@env ? @env['exception_notifier.exception_data'] : nil) || {}
 
