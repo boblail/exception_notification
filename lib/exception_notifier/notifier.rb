@@ -30,12 +30,9 @@ class ExceptionNotifier
           :sections => default_sections }
       end
       
-      def safely_deliver_exception_notification(env, *args)
+      def safely_deliver_exception_notification(*args)
         begin
-          options = args.extract_options!
-          exception = args.first || $1
-          request.env["exception_notifier.exception_data"] = options[:data]
-          ExceptionNotifier::Notifier.deliver_exception_notification(env, exception)
+          ExceptionNotifier::Notifier.deliver_exception_notification(*args)
         rescue
           begin
             Rails.logger.error "[exception_notification] #{$!}\n#{$!.backtrace}"
@@ -50,15 +47,16 @@ class ExceptionNotifier
       end
     end
 
-    def exception_notification(env, exception)
-      @env        = env
-      @exception  = exception
-      @options    = (env['exception_notifier.options'] || {}).reverse_merge(self.class.default_options)
-      @kontroller = env['action_controller.instance'] || MissingController.new
-      @request    = ActionDispatch::Request.new(env)
+    def exception_notification(*args)
+      options     = args.extract_options!
+      @env        = options[:env]
+      @exception  = args.first || $!
+      @options    = ((@env ? @env['exception_notifier.options'] : nil) || {}).merge(options).reverse_merge(self.class.default_options)
+      @kontroller = (@env ? @env['action_controller.instance'] : nil) || MissingController.new
+      @request    = @env ? ActionDispatch::Request.new(@env) : nil
       @backtrace  = clean_backtrace(exception)
       @sections   = @options[:sections]
-      data        = env['exception_notifier.exception_data'] || {}
+      data        = options[:data] || (@env ? @env['exception_notifier.exception_data'] : nil) || {}
 
       data.each do |name, value|
         instance_variable_set("@#{name}", value)
