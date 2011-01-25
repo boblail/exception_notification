@@ -26,7 +26,7 @@ class ExceptionNotifier
       
       def safely_deliver_exception_notification(*args)
         begin
-          ExceptionNotifier::Notifier.deliver_exception_notification(*args)
+          ExceptionNotifier::Notifier.exception_notification(*args).deliver
         rescue
           begin
             Rails.logger.error "[exception_notification] #{$!}\n#{$!.backtrace.join("\n")}"
