@@ -1,2 +1,4 @@
+<% if @request -%>
 * session id: <%= raw @request.session['session_id'].inspect.html_safe %>
 * data: <%= raw PP.pp(@request.session, "") %>
+<% end -%>
