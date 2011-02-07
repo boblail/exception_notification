@@ -70,8 +70,8 @@ class ExceptionNotifier
       
       def clean_backtrace(exception)
         Rails.respond_to?(:backtrace_cleaner) ?
-          Rails.backtrace_cleaner.send(:filter, exception.backtrace) :
-          exception.backtrace
+          Rails.backtrace_cleaner.send(:filter, (exception.backtrace || "")) :
+          exception.backtrace || ""
       end
       
       helper_method :inspect_object
