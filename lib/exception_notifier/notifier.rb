@@ -50,11 +50,11 @@ class ExceptionNotifier
       @kontroller = (@env ? @env['action_controller.instance'] : nil) || MissingController.new
       @request    = @env ? ActionDispatch::Request.new(@env) : nil
       @backtrace  = clean_backtrace(@exception)
-      data        = options[:data] || (@env ? @env['exception_notifier.exception_data'] : nil) || {}
+      @data        = options[:data] || (@env ? @env['exception_notifier.exception_data'] : nil) || {}
       @sections   = @options[:sections]
-      @sections << "data" unless data.blank?
+      @sections << "data" unless @data.blank?
 
-      data.each do |name, value|
+      @data.each do |name, value|
         instance_variable_set("@#{name}", value)
       end
 
